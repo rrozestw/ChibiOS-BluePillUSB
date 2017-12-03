@@ -6,7 +6,7 @@
 
 == Fix hardware
 
-Blue Pill board has wrong and a very simple USB circuit (reset not supported).
+Blue Pill board has wrong and a very simple USB circuit (e.g. reset is not supported).
 
 Check R10 resistance; USB spec says there should be 1.5k pull. If you have 10k, like I do: add 2k resistor between 3.3V and P12.
 
