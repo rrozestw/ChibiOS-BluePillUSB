@@ -1,0 +1,83 @@
+= STM32F103C8(1.68USD BluePill board)+ChibiOS+USB example
+
+== Get
+
+ git clone --recursive https://github.com/rrozestw/ChibiOS-BluePillUSB.git
+
+== Fix hardware
+
+Blue Pill board has wrong and a very simple USB circuit (reset not supported).
+
+Check R10 resistance; USB spec says there should be 1.5k pull. If you have 10k, like I do: add 2k resistor between 3.3V and P12.
+
+== Build
+
+Run `make`
+
+== Flash using STLink v2
+
+Run `./BURN.sh`:
+
+....
+openocd -f bluepill.cfg -c 'init_reset halt; program build/ch.bin 0x8000000 verify;'
+....
+
+
+== Flash using https://github.com/blacksphere/blackmagic/wiki[Black Magic Probe]
+
+....
+arm-none-eabi-gdb -nx --batch \
+  -ex 'target extended-remote /dev/ttyACM0' \
+  -ex 'monitor swdp_scan' \
+  -ex 'attach 1' \
+  -ex 'load' \
+  -ex 'compare-sections' \
+  -ex 'kill' \
+  build/ch.elf
+....
+
+== Debug
+
+=== Terminal 1:
+
+ arm-none-eabi-gdb --eval-command="target remote localhost:3333" ../build/ch.elf
+
+Type in gdb to set breakpoint: `b main`
+
+=== Terminal 2:
+
+ telnet localhost 4444
+
+Execute command over telnet: `> reset init`
+
+=== Terminal 1:
+
+Continue in gdb: `c`
+
+== Run
+
+ sudo screen /dev/ttyACM0 115200
+
+ > help
+
+....
+ch> help
+Commands: help exit info echo systime mem threads test write 
+ch> info
+Kernel:       5.0.0
+Compiler:     GCC 4.9.3 20150529 (prerelease)
+Architecture: ARMv7-M
+Core Variant: Cortex-M3
+Port Info:    Advanced kernel mode
+Platform:     STM32F10x Performance Line Medium Density
+Board:        STM32F103 Minimal Module
+Build time:   Dec  3 2017 - 21:16:29
+ch> threads
+stklimit    stack     addr refs prio     state         name
+
+00000000 200007B4 20001D28    1  128    WTEXIT         main
+20001528 20001574 200015B8    1    1     READY         idle
+200013C8 2000146C 200014C8    1  128  SLEEPING      blinker
+20001DF8 2000256C 20002678    1  129   CURRENT        shell
+ch> 
+....
